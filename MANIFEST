@@ -1,0 +1,9 @@
+Changes
+MANIFEST
+Makefile.PL
+README
+lib/XML/Entities.pm
+lib/XML/Entities/Data.pod
+bin/download-entities.pl
+t/00-xml-entities-data.t
+t/01-xml-entities.t
