@@ -9,7 +9,7 @@ XML::Entities - Decode strings with XML entities
  use XML::Entities;
 
  $a = "Tom &amp; Jerry &copy; Warner Bros&period;"
- XML::Entities::decode($a);
+ XML::Entities::decode('all', $a);
 
 =head1 DESCRIPTION
 
@@ -63,7 +63,7 @@ use Carp;
 use XML::Entities::Data;
 require HTML::Parser;  # for fast XS implemented decode_entities
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 sub Version { $VERSION; }
 
 sub decode {
