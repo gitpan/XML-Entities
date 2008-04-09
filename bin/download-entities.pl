@@ -177,9 +177,7 @@ EOPERL
           . "{ my \$rv; sub $name {\n"
           . "$I# Return cached value if there is one.\n"
           . "${I}if (\$rv) { return \$rv }\n"
-          . "$I# This cuteness adds the semicolon-terminated keys to the hash\n"
-          . "${I}return \$rv = "
-          . q/{ map { my $hr = $_; map { ( $_, $hr->{$_}, $_.';', $hr->{$_} ) } keys %$hr } {/."\n";
+          . "${I}return \$rv = {\n";
         
         # The entity definitions
         for my $definition (@$definition_array) {
@@ -189,7 +187,7 @@ EOPERL
         }
         
         # End of the entity set
-        $rv .= "$I}}\n}}\n";
+        $rv .= "$I}\n}}\n";
     }
     $rv .= $footer;
     

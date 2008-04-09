@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use utf8;
-use Test::More tests => 8;
+use Test::More tests => 9;
 
 BEGIN {
     use_ok('XML::Entities')
@@ -107,5 +107,14 @@ is_deeply(\@rv, [$decoded, $decoded2], "Does list return work?");
 
 $encoded = "&entity;text text &anotherEntity;text text";
 $decoded = "ENTITYtext text はtext text";
-my %ent2chr = ( 'entity;' => 'ENTITY', 'anotherEntity;' => 'は', 'irrelevant;' => 'IRRELEVANT' );
+my %ent2chr = ( 'entity;' => 'ENTITY', 'anotherEntity' => 'は', 'irrelevant' => 'IRRELEVANT' );
 is(XML::Entities::decode(\%ent2chr, $encoded), $decoded, "Do custom entity-to-character maps work?");
+
+
+
+# numify
+
+$encoded = 'ahoj &mufe; jak &se; mas &amp; co &delas;?';
+$decoded = 'ahoj &#95; jak &se; mas &amp; co &#400;?';
+%ent2chr = ( 'mufe' => '_', 'delas;' => chr(400) );
+is(XML::Entities::numify(\%ent2chr, $encoded), $decoded, "Numify with custom map");

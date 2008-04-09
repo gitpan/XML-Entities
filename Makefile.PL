@@ -23,7 +23,6 @@ WriteMakefile(
         'lib/XML/Entities/Data.pod' => '${INST_MAN3DIR}/XML::Entities::Data.3pm',
     },
     PREREQ_PM           => {
-        'HTML::Parser'   => 0,
         'Carp'           => 0,
         'Test::More'     => 0,
         'File::Basename' => 0,

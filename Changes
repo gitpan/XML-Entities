@@ -1,5 +1,11 @@
 Revision history for XML-Entities
 
+0.03    2008-04-09 14:12
+        Lifted the dependency from HTML::Parser, providing a regexp-based fallback.
+        Semicolon-terminated entity names no longer added to the maps.
+        2008-04-04 10:14
+        Added the numify function.
+
 0.02    2007-12-16 15:25
         Corrected the example in documentation to actually work.
 

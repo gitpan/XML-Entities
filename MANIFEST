@@ -7,3 +7,4 @@ lib/XML/Entities/Data.pod
 bin/download-entities.pl
 t/00-xml-entities-data.t
 t/01-xml-entities.t
+t/02-unicode.t
