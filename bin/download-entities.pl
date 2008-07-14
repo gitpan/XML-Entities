@@ -1,40 +1,5 @@
 #!/usr/bin/perl
 
-=encoding utf8
-
-This script downloads the definitions of XML entities from
-http://www.w3.org/2003/entities/iso9573-2003/ or from whatever
-address you give it as an argument. The argument should be
-an URL (that LWP::Simple::get can access) pointing to a document
-with (absolute or relative) references to files ending with the
-C<.ent> suffix. These files are expected to be DTD's with
-lines like
-
- <!ENTITY amp "&#38;" >
-
-The script parses these files and prints the perl module to the
-standard output. If you wish, you can give "file" as another
-argument to the script and it will then print it to "file".
-You can also specify the output file in the environment variable
-OUTPUT_FILE.
-
-The index and the output file are distinguished by the presence
-of "://" substring.
-If you want to use a locally stored index file (the one with the
-.ent references), you can access it by saying
-
- perl download.pl file:///path/to/index.html
-
-Note that the script currently distinguishes between relative
-and absolute paths by looking at whether the href contains a "://"
-substring. This can lead to crashes when the links look like
-href="/path/file.ent".
-
-Also, the script assumes the links have exactly the format
-C<href="..."> - with double quotes.
-
-=cut
-
 use strict;
 use warnings;
 use Carp;
@@ -44,10 +9,18 @@ use Fatal 'open';
 
 sub parse_ent;
 sub format_output_perlmod_hashsubs0;
+sub download;
+sub report_error;
+sub c($) { return $_ eq $_[0] }
 
 my $I = ' ' x 4;  # Indentation;
 my $out_fn = $ENV{'OUTPUT_FILE'};
 my $index_url;
+my %OPTIONS = ();
+
+if ($ENV{INTERACTIVE}) {
+    $OPTIONS{interactive} = 1;
+}
 
 ARG:
 for (@ARGV) {
@@ -56,13 +29,17 @@ for (@ARGV) {
             croak "Index doubly defined ('$index_url' and  '$_')"
         }
         $index_url = $_;
-        next ARG;
+        next ARG
+    }
+    if (c -i || c '--interactive') {
+        $OPTIONS{interactive} = 1;
+        next ARG
     }
     if (defined $out_fn) {
         croak "Output file doubly defined ('$out_fn', '$_')"
     }
     $out_fn = $_;
-    next ARG;
+    next ARG
 }
 if (not defined $index_url) {
     $index_url = 'http://www.w3.org/2003/entities/iso9573-2003doc/overview.html';
@@ -70,15 +47,15 @@ if (not defined $index_url) {
 
 # load the entity declarations from the web
 print STDERR "Downloading the list of documents\n";
-my $index = LWP::Simple::get($index_url);
-die qq/Couldn't download the index ('$index_url' where the .ent files are listed)/ if not defined $index;
+my $index = download($index_url, {
+    errmess => q/Couldn't download the index ('%s' where the .ent files are listed)/,
+    unignorable => 1,
+});
 my @doc_hrefs_relative = $index =~ /(?<=href=") [^"]+\.ent (?=")/sgx;
 my @doc_hrefs = map { m{://} ? $_ : dirname($index_url) . '/' . $_ } @doc_hrefs_relative;
 my @doc_names = map { my ($name) = fileparse($_, '.ent'); $name } @doc_hrefs;
 print STDERR "Downloading the documents\n";
-my @ent_declarations = map get($_) || die (qq/Couldn't download the declarations for $_/), @doc_hrefs;
-#my @doc_names = qw(isobox isocyr1 isocyr2 isodia isolat1 isolat2 isonum isopub isoamsa isoamsb isoamsc isoamsn isoamso isoamsr isogrk1 isogrk2 isogrk3 isogrk4 isomfrk isomopf isomscr isotech);
-#my @ent_declarations = map { open my $fh, '<', $_; local $/; <$fh> } glob('ent_files/*.ent');
+my @ent_declarations = map ( (download($_, {errmess => q/Couldn't download the declarations for %s/})), @doc_hrefs );
 
 # parse the .ent files and save them in arrays
 print STDERR "Parsing the documents... ";
@@ -98,6 +75,60 @@ else {
 
 print $out_fh format_output_perlmod_hashsubs0(\@doc_names, \%ent_definitions);
 print STDERR "Done\n";
+
+sub download {
+    my ($url, $options) = @_;
+    if ($OPTIONS{interactive}) {
+        print STDERR "About to download '$url'\n";
+        my $ignore_ok = ', enter whitespace to skip download';
+        $ignore_ok = '' if $options->{unignorable};
+        GETINPUT:
+        {
+            print STDERR "Hit enter to confirm$ignore_ok or enter another URL\n";
+            my $input = <STDIN>;
+            chomp($input);
+            if ($input eq '') {
+                # OK
+            }
+            elsif ($input =~ /^\s+$/) {
+                if ($options->{unignorable}) {
+                    redo GETINPUT
+                }
+                return '';
+            }
+            else {
+                print STDERR "Downloading '$input' instead of '$url'\n";
+                $url = $input;
+            }
+        }
+    }
+    my $content = LWP::Simple::get($url);
+    if (not defined $content) {
+        if ($OPTIONS{interactive}) {
+            $content = report_error($url, $options);
+        }
+        else {
+            die sprintf $options->{errmess}."\n", $url
+        }
+    }
+    return $content
+}
+
+sub report_error {
+    my ($url, $options) = @_;
+    print STDERR sprintf $options->{errmess}."\n", $url;
+    my $ignore_ok = $options->{unignorable} ? '' : ' Ignore?';
+    GETINPUT:
+    {
+        print STDERR "Abort? Retry?$ignore_ok\n";
+        my $input = <STDIN>;
+        local $_ = $input;
+           /^a(?:bort)?$/i  and die "Failed downloading '$url'"
+        or /^r(?:etry)?$/i  and return download(@_)
+        or /^i(?:gnore)?$/i and $ignore_ok and return ''
+        or redo GETINPUT
+    }
+}
 
 # Get (preferably a reference to) a string that contains lines like:
 # <!ENTITY amp           "&#38;" >
@@ -134,7 +165,7 @@ use strict;
 my @names;
 EOPERL
 
-my $footer = <<'EOPERL';
+my $footer = <<'EOPERL' . "\n__END__\n";
 
 sub all {
     no strict 'refs';
@@ -193,3 +224,61 @@ EOPERL
     
     return $rv
 }
+
+__END__
+
+=encoding utf8
+
+=head1 NAME
+
+download-entities - download and parse XML Entity definitions
+
+=head1 SYNOPSIS
+
+ $ perl download-entities.pl -i # interactive
+ $ perl download-entities.pl > output-file.pm
+ $ perl download-entities.pl output-file.pm
+ 
+ # instead of http://www.w3.org/2003/entities/iso9573-2003/
+ $ perl download-entities.pl http://my.server.com/entities.html
+
+=head1 DESCRIPTION
+
+This script downloads the definitions of XML entities from
+http://www.w3.org/2003/entities/iso9573-2003/ or from whatever
+address you give it as an argument. The argument should be
+an URL (that LWP::Simple::get can access) pointing to a document
+with (absolute or relative) references to files ending with the
+C<.ent> suffix. These files are expected to be DTD's with
+lines like
+
+ <!ENTITY amp "&#38;" >
+
+The script parses these files and prints the perl module to the
+standard output. If you wish, you can give "file" as another
+argument to the script and it will then print it to "file".
+You can also specify the output file in the environment variable
+C<OUTPUT_FILE>.
+
+The index and the output file are distinguished by the presence
+of "://" substring.
+If you want to use a locally stored index file (the one with the
+.ent references), you can access it by saying
+
+ perl download.pl file:///path/to/index.html
+
+Note that the script currently distinguishes between relative
+and absolute paths by looking at whether the href contains a "://"
+substring. This can lead to crashes when the links look like
+href="/path/file.ent".
+
+Also, the script assumes the links have exactly the format
+I<href="..."> - with double quotes.
+
+=head2 Interactive download
+
+In case you run into problems downloading the documents, you can try to run the
+script with the C<-i> or C<--interactive> option. This will let you skip
+downloads or enter alternative URLs for individual documents.
+
+=cut

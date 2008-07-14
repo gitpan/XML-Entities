@@ -1,5 +1,9 @@
 Revision history for XML-Entities
 
+0.03_01 2008-07-14 10:26
+        download-entities.pl:
+        Enabled interactive download to deal with optional problems with download.
+
 0.03    2008-04-09 14:12
         Lifted the dependency from HTML::Parser, providing a regexp-based fallback.
         Semicolon-terminated entity names no longer added to the maps.
