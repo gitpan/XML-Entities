@@ -31,7 +31,7 @@ for (@ARGV) {
         $index_url = $_;
         next ARG
     }
-    if (c -i || c '--interactive') {
+    if (c '-i' || c '--interactive') {
         $OPTIONS{interactive} = 1;
         next ARG
     }
@@ -280,5 +280,8 @@ I<href="..."> - with double quotes.
 In case you run into problems downloading the documents, you can try to run the
 script with the C<-i> or C<--interactive> option. This will let you skip
 downloads or enter alternative URLs for individual documents.
+
+The interactive mode is also triggered when the C<INTERACTIVE> environment
+variable is set to a true value (in Perl sense).
 
 =cut

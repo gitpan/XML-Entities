@@ -1,5 +1,10 @@
 Revision history for XML-Entities
 
+0.03_02 2008-07-15 14:20
+        download-entities.pl:
+        Bareword -i converted to quoted string.
+        Documented the environment-variable trigger of interactivity.
+
 0.03_01 2008-07-14 10:26
         download-entities.pl:
         Enabled interactive download to deal with optional problems with download.
