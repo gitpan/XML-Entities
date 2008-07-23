@@ -1,5 +1,10 @@
 Revision history for XML-Entities
 
+0.03_03 2008-07-23 11:52
+        download-entities.pl:
+        Switched from LWP::Simple to LWP::UserAgent (patch by Guillaume Protet).
+        Enabled timeout control.
+
 0.03_02 2008-07-15 14:20
         download-entities.pl:
         Bareword -i converted to quoted string.

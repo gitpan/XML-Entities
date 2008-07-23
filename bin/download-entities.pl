@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use Carp;
-use LWP::Simple;
+use LWP::UserAgent;
 use File::Basename;
 use Fatal 'open';
 
@@ -14,16 +14,20 @@ sub report_error;
 sub c($) { return $_ eq $_[0] }
 
 my $I = ' ' x 4;  # Indentation;
-my $out_fn = $ENV{'OUTPUT_FILE'};
+my $out_fn = $ENV{OUTPUT_FILE};
 my $index_url;
 my %OPTIONS = ();
+my $LWP_USER_AGENT = LWP::UserAgent->new;
 
 if ($ENV{INTERACTIVE}) {
     $OPTIONS{interactive} = 1;
 }
+if (exists $ENV{DOWNLOAD_TIMEOUT}) {
+    $OPTIONS{timeout} = int $ENV{DOWNLOAD_TIMEOUT};
+}
 
 ARG:
-for (@ARGV) {
+while (defined (local $_ = shift @ARGV)) {
     if (m{://}) {
         if (defined $index_url) {
             croak "Index doubly defined ('$index_url' and  '$_')"
@@ -35,6 +39,10 @@ for (@ARGV) {
         $OPTIONS{interactive} = 1;
         next ARG
     }
+    if (c '--timeout') {
+        $OPTIONS{timeout} = shift @ARGV;
+        next ARG
+    }
     if (defined $out_fn) {
         croak "Output file doubly defined ('$out_fn', '$_')"
     }
@@ -44,6 +52,7 @@ for (@ARGV) {
 if (not defined $index_url) {
     $index_url = 'http://www.w3.org/2003/entities/iso9573-2003doc/overview.html';
 }
+$LWP_USER_AGENT->timeout($OPTIONS{timeout}) if exists $OPTIONS{timeout};
 
 # load the entity declarations from the web
 print STDERR "Downloading the list of documents\n";
@@ -78,6 +87,7 @@ print STDERR "Done\n";
 
 sub download {
     my ($url, $options) = @_;
+
     if ($OPTIONS{interactive}) {
         print STDERR "About to download '$url'\n";
         my $ignore_ok = ', enter whitespace to skip download';
@@ -102,8 +112,14 @@ sub download {
             }
         }
     }
-    my $content = LWP::Simple::get($url);
-    if (not defined $content) {
+	
+    my $response = $LWP_USER_AGENT->get($url);
+    my $content;
+
+    if ($response->is_success) {
+        $content = $response->content;
+    }
+    else {
         if ($OPTIONS{interactive}) {
             $content = report_error($url, $options);
         }
@@ -247,7 +263,7 @@ download-entities - download and parse XML Entity definitions
 This script downloads the definitions of XML entities from
 http://www.w3.org/2003/entities/iso9573-2003/ or from whatever
 address you give it as an argument. The argument should be
-an URL (that LWP::Simple::get can access) pointing to a document
+an URL (that LWP::UserAgent::get can access) pointing to a document
 with (absolute or relative) references to files ending with the
 C<.ent> suffix. These files are expected to be DTD's with
 lines like
@@ -283,5 +299,19 @@ downloads or enter alternative URLs for individual documents.
 
 The interactive mode is also triggered when the C<INTERACTIVE> environment
 variable is set to a true value (in Perl sense).
+
+=head2 Options
+
+Beside the C<--interactive> option, this script also accepts the C<--timeout>
+option. It specifies the timeout for LWP::UserAgent in seconds when downloading.
+The same is controlled by the C<DOWNLOAD_TIMEOUT> environment variable. The
+defaule (180s) timeout is used when not specified.
+
+ # 10 seconds timeout - croak on failure
+ perl download-entities.pl --timeout 10 > XML/Entities/Data.pm
+ # 5 seconds timeout - croak on failure
+ DOWNLOAD_TIMEOUT=5 perl download-entities.pl > XML/Entities/Data.pm
+ # 1 second timeout - ask on failure
+ perl download-entities.pl --interactive --timeout 1 > XML/Entities/Data.pm
 
 =cut

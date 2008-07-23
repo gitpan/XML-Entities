@@ -4,8 +4,6 @@ This module provides a mapping from the standard XML entities to their Unicode
 characters. A function for decoding is provided. The mapping can be generated
 from a DTD file with entity definitions.
 
-The module requires the HTML::Parser module.
-
 INSTALLATION
 
 To install this module, run the following commands:
@@ -14,6 +12,17 @@ To install this module, run the following commands:
 	make
 	make test
 	make install
+
+The "make" command (without specified target) builds the module. In this phase,
+the entities are downloaded from the web (w3.org site by default). The script
+doing this (download-entities.pl) can be tweaked by arguments and environment
+variables. To enable interactivity during download and to set the timeout to 10
+seconds, the installation procedure would look like this:
+
+    perl Makefile.PL
+    make INTERACTIVE=1 DOWNLOAD_TIMEOUT=10
+    make test
+    make install
 
 To rebuild the entity definitions, run
 
