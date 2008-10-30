@@ -17,7 +17,6 @@ my $I = ' ' x 4;  # Indentation;
 my $out_fn = $ENV{OUTPUT_FILE};
 my $index_url;
 my %OPTIONS = ();
-my $LWP_USER_AGENT = LWP::UserAgent->new;
 
 if ($ENV{INTERACTIVE}) {
     $OPTIONS{interactive} = 1;
@@ -52,7 +51,6 @@ while (defined (local $_ = shift @ARGV)) {
 if (not defined $index_url) {
     $index_url = 'http://www.w3.org/2003/entities/iso9573-2003doc/overview.html';
 }
-$LWP_USER_AGENT->timeout($OPTIONS{timeout}) if exists $OPTIONS{timeout};
 
 # load the entity declarations from the web
 print STDERR "Downloading the list of documents\n";
@@ -113,7 +111,14 @@ sub download {
         }
     }
 	
-    my $response = $LWP_USER_AGENT->get($url);
+    my $response = do {
+        # Creating a new LWP::UserAgent object for every download because otherwise
+        # the timeout seems not to persist across downloads in some cases
+        my $lwp = LWP::UserAgent->new;
+        $lwp->env_proxy;
+        $lwp->timeout($OPTIONS{timeout}) if exists $OPTIONS{timeout};
+        $lwp->get($url);
+    };
     my $content;
 
     if ($response->is_success) {

@@ -26,7 +26,7 @@ WriteMakefile(
         'Carp'           => 0,
         'Test::More'     => 0,
         'File::Basename' => 0,
-        'LWP::Simple'    => 0,
+        'LWP::UserAgent' => 0,
         'Fatal'          => 0,
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
