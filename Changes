@@ -1,5 +1,8 @@
 Revision history for XML-Entities
 
+0.03_05 2008-11-25 15:30
+        Added META.yml
+
 0.03_04 2008-09-30 17:41
         download-entities.pl:
         - Every download creates its own LWP::UserAgent object.
