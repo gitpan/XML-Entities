@@ -5,7 +5,7 @@ use 5.008;    # Unicode all over
 use Carp;
 use XML::Entities::Data;
 
-our $VERSION = '0.03_05';
+our $VERSION = '0.03_06';
 
 eval { require HTML::Parser };  # for fast XS implemented _decode_entities
 

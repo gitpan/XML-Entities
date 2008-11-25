@@ -1,5 +1,8 @@
 Revision history for XML-Entities
 
+0.03_06 2008-11-25 15:44
+        META.yml: Removed the "..." which is not supported by the PAUSE
+
 0.03_05 2008-11-25 15:30
         Added META.yml
 
