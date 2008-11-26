@@ -1,5 +1,8 @@
 Revision history for XML-Entities
 
+0.0307  2008-11-26 08:06
+        Removed the underscore from version number to let the indexer see the module
+
 0.03_06 2008-11-25 15:44
         META.yml: Removed the "..." which is not supported by the PAUSE
 
