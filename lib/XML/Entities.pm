@@ -5,7 +5,7 @@ use 5.008;    # Unicode all over
 use Carp;
 use XML::Entities::Data;
 
-our $VERSION = '1.0000';
+our $VERSION = '1.0001';
 
 eval { require HTML::Parser };  # for fast XS implemented _decode_entities
 
@@ -153,13 +153,27 @@ The list of entities is defined in the XML::Entities::Data module.
 The list can be generated from the w3.org definition (or any other).
 Check C<perldoc XML::Entities::Data> for more details.
 
+=head2 Encoding entities
+
+The HTML::Entities module provides a function for encoding entities. You just
+have to assign the right mapping to the C<%HTML::Entities::char2entity> hash.
+So, to encode everything that XML::Entities knows about, you'd say:
+
+ use XML::Entities;
+ use HTML::Entities;
+ %HTML::Entities::char2entity = %{
+    XML::Entities::Data::char2entity('all');
+ };
+ my $encoded = encode_entities('tom&jerry');
+ # now $encoded is 'tom&amp;jerry'
+
 =head1 SEE ALSO
 
 HTML::Entities, XML::Entities::Data
 
 =head1 COPYRIGHT
 
-Copyright 2010 Jan Oldrich Kruza E<lt>sixtease@cpan.orgE<gt>. All rights reserved.
+Copyright 2012 Jan Oldrich Kruza E<lt>sixtease@cpan.orgE<gt>. All rights reserved.
 
 This library is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
